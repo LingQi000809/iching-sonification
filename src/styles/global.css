@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@keyframes breathe-scale {
+    0%,
+    100% {
+        transform: scale(0.95);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.animate-breathe-scale {
+    animation: breathe-scale 10s ease-in-out infinite;
+}
+
+.chinese-pattern {
+    background-image: url('/chinese-ink-painting-transparent.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 0.01;
+}
