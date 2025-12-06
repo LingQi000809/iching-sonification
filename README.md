@@ -5,6 +5,10 @@
 nvm install 20
 nvm use 20
 ```
+3. Run 
+```
+npm install
+```
 
 # Test Locally
 ```
