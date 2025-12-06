@@ -71,6 +71,9 @@ export default function BreathingOracle({ size = 300, opacity = 0.5, maskOpacity
 
   return (
     <div className={`absolute inset-0 flex items-center justify-center z-0 ${className}`}>
+      {/* Background layers */}
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-50 via-amber-100 to-red-100"></div>
+
       {/* Gradient Oracle */}
       <div style={gradientStyle} className="animate-breathe-scale"></div>
       

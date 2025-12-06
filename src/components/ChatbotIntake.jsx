@@ -99,9 +99,6 @@ export default function ChatbotIntake() {
 
   return (
     <div className="flex flex-col justify-between items-center h-screen w-screen relative">
-      {/* Reusable fullscreen breathing oracle */}
-      <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
-
       {/* Bot text */}
       <div className={`font-serif absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-10 text-2xl text-black text-center z-20 transition-opacity duration-200 ${fade ? "opacity-100" : "opacity-0"}`}>
         {renderBotText()}
