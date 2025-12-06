@@ -29,7 +29,7 @@ function randomColor() {
  *   - maskOpacity: opacity of the white mask overlay
  *   - className: additional classes to pass
  */
-export default function BreathingOracle({ size = 400, opacity = 0.5, maskOpacity = 0.5, className = "" }) {
+export default function BreathingOracle({ size = 300, opacity = 0.5, maskOpacity = 0.5, className = "" }) {
   const color1 = useRef(randomColor());
   const color2 = useRef(randomColor());
   const targetColor1 = useRef(randomColor());
@@ -74,6 +74,14 @@ export default function BreathingOracle({ size = 400, opacity = 0.5, maskOpacity
       {/* Gradient Oracle */}
       <div style={gradientStyle} className="animate-breathe-scale"></div>
       
+      {/* Chinese Ink Painting Decorations */}
+      <div className="absolute -bottom-10 -left-20 z-10 opacity-35">
+        <img src="public/transparent-ink2.png" alt="Decoration1" className="object-contain" />
+      </div>
+      <div className="absolute top-0 right-0 z-10 opacity-10 transform scale-x-[-1]">
+        <img src="public/transparent-ink1.png" alt="Decoration1" className="object-contain" />
+      </div>
+
       {/* Fullscreen white mask */}
       <div className={`absolute inset-0 bg-white`} style={{ opacity: maskOpacity, backdropFilter: "blur(4px)" }}></div>
     </div>
