@@ -10,8 +10,8 @@ export default function IntakePage() {
   const { setQuestion, setBenGua, setZhiGua, setChangingLines, setMusicPlan } =
     useIching();
 
-  const handleFinishedQuestion = (finalQuestion) => {
-    setQuestion(finalQuestion);
+  const handleFinishedQuestion = (question) => {
+    setQuestion(question.trim());
     setBenGua(null);
     setZhiGua(null);
     setChangingLines([]);

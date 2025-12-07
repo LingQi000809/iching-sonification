@@ -3,34 +3,40 @@ import React, { useState } from "react";
 export default function ChatbotIntake({ onFinished }) {
   const [step, setStep] = useState(0);
   const [question, setQuestion] = useState("");
-  const [questionTime, setQuestionTime] = useState("");
-  const [dob, setDob] = useState("");
   const [name, setName] = useState("");
   const [fade, setFade] = useState(true);
+  const [showError, setShowError] = useState(false);
 
   const handleNext = () => {
-    setFade(false); // fade out
+    if (step == 1 && !question) {
+      setShowError(true);
+      return;
+    }
+    setShowError(false);
+    fadeTransition(() => setStep((prev) => prev + 1));
+  };
+
+
+  const fadeTransition = (update) => {
+    setFade(false);
     setTimeout(() => {
-      setStep((prev) => prev + 1);
-      setFade(true); // fade in new content
+      update();
+      setFade(true);
     }, 300);
   };
 
-  const handleSubmit = () => {
-    const finalQuestion = question.trim();
+  const handleBack = () => {
+    if (step === 0) return;
+    fadeTransition(() => setStep((prev) => prev - 1));
+  };
 
+  const handleSubmit = () => {
     console.log({
-      question: finalQuestion,
+      question: question,
       name,
     });
-
-    if (!finalQuestion) {
-      alert("");
-      return;
-    }
-
     if (onFinished) {
-      onFinished(finalQuestion);
+      onFinished(question);
     }
   };
 
@@ -88,11 +94,11 @@ export default function ChatbotIntake({ onFinished }) {
               className={inputClasses}
               placeholder="Type your question"
             />
+            <div className={`mt-2 text-red-700 font-semibold ${showError?'opacity-100':'opacity-0'}`}>
+              Please enter a question to consult with I-Ching.
+            </div>
             <button
-              onClick={() => {
-                setQuestionTime(new Date().toISOString());
-                handleNext();
-              }}
+              onClick={() => handleNext()}
               className={buttonClasses}
             >
               Next
@@ -109,6 +115,9 @@ export default function ChatbotIntake({ onFinished }) {
               className={inputClasses}
               placeholder="Your name"
             />
+            <div className={`mt-2 text-red-700 font-semibold opacity-0`}>
+              Name is optional.
+            </div>
             <button onClick={handleSubmit} className={buttonClasses}>
               Start Casting
             </button>
@@ -121,6 +130,15 @@ export default function ChatbotIntake({ onFinished }) {
 
   return (
     <div className="flex flex-col justify-between items-center h-screen w-screen relative">
+      {/* Back Button */}
+      {step > 0 && (
+        <button 
+          onClick={handleBack} 
+          className="absolute top-6 left-6 p-2 px-4 rounded-xl bg-white/20 backdrop-blur text-black shadow cursor-pointer hover:bg-white/40 transition duration-300 font-serif">
+          ← Back
+        </button>
+      )}
+
       {/* Bot text */}
       <div
         className={`font-serif absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-10 text-2xl text-black text-center z-20 transition-opacity duration-200 ${
