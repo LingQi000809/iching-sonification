@@ -75,7 +75,7 @@ export default function ChatbotIntake() {
               }}
               className={buttonClasses}
             >
-              Submit
+              Next
             </button>
           </div>
         );
@@ -83,14 +83,14 @@ export default function ChatbotIntake() {
         return (
           <div className="flex flex-col items-center w-full">
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClasses} placeholder="Your name" />
-            <button onClick={handleNext} className={buttonClasses}>Submit</button>
+            <button onClick={handleNext} className={buttonClasses}>Next</button>
           </div>
         );
       case 3:
         return (
           <div className="flex flex-col items-center w-full">
             <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={inputClasses} />
-            <button onClick={handleSubmit} className={buttonClasses}>Submit</button>
+            <button onClick={handleSubmit} className={buttonClasses}>Start Casting</button>
           </div>
         );
       default: return null;
