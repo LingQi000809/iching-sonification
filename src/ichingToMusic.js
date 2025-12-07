@@ -2,9 +2,9 @@
 import { aiClient } from "./aiClient";
 
 function buildIchingPrompt(params) {
-  const { question, benGua, zhiGua, changingLines } = params;
+    const { question, benGua, zhiGua, changingLines } = params;
 
-  return `
+    return `
 你是一位既懂《易经》、中国传统音乐，又懂氛围 / 冥想音乐制作的专家。
 现在要做一个 I-Ching 占卜的“音乐解读”。
 
@@ -63,49 +63,47 @@ function buildIchingPrompt(params) {
 
 
 export async function getIchingMusicPlan(params) {
-  const prompt = buildIchingPrompt(params);
+    const prompt = buildIchingPrompt(params);
 
-  const response = await aiClient.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: prompt }],
-      },
-    ],
-    generationConfig: {
-      // 官方推荐字段名是 responseMimeType（驼峰）
-      responseMimeType: "application/json",
-    },
-  });
+    const response = await aiClient.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{
+            role: "user",
+            parts: [{ text: prompt }],
+        }, ],
+        generationConfig: {
+            // 官方推荐字段名是 responseMimeType（驼峰）
+            responseMimeType: "application/json",
+        },
+    });
 
-  // 新版 SDK：text 是一个属性，不是函数
-  const rawText = (response && response.text) || "";
-  console.log("Gemini raw response.text:", rawText);
+    // 新版 SDK：text 是一个属性，不是函数
+    const rawText = (response && response.text) || "";
+    console.log("Gemini raw response.text:", rawText);
 
-  if (!rawText) {
-    throw new Error("Empty response from Gemini");
-  }
-
-  // 有些时候模型会返回 ```json ... ```，这里把外壳剥掉
-  let cleaned = rawText.trim();
-
-  if (cleaned.startsWith("```")) {
-    const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (match && match[1]) {
-      cleaned = match[1].trim();
+    if (!rawText) {
+        throw new Error("Empty response from Gemini");
     }
-  }
 
-  console.log("Gemini cleaned JSON string:", cleaned);
+    // 有些时候模型会返回 ```json ... ```，这里把外壳剥掉
+    let cleaned = rawText.trim();
 
-  try {
-    const parsed = JSON.parse(cleaned);
-    return parsed;
-  } catch (err) {
-    console.error("Failed to parse Gemini JSON:", err);
-    // 为了 debug，顺便把原文本打印出来
-    console.error("Raw text was:", rawText);
-    throw err;
-  }
+    if (cleaned.startsWith("```")) {
+        const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (match && match[1]) {
+            cleaned = match[1].trim();
+        }
+    }
+
+    console.log("Gemini cleaned JSON string:", cleaned);
+
+    try {
+        const parsed = JSON.parse(cleaned);
+        return parsed;
+    } catch (err) {
+        console.error("Failed to parse Gemini JSON:", err);
+        // 为了 debug，顺便把原文本打印出来
+        console.error("Raw text was:", rawText);
+        throw err;
+    }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import BreathingOracle from "../components/BreathingOracle";
-import { useIching } from "../context/IchingContext";
+import { useIching, hexagramLookup } from "../context/IchingContext";
 import { getIchingMusicPlan } from "../ichingToMusic";
 import { playLyriaMusic } from "../lyriaPlayer";
 
@@ -43,10 +43,12 @@ export default function InterpretationPage() {
           }
         }
 
+        const [benGuaIdx, benGuaChinese] = hexagramLookup[benGua];
+        const [zhiGuaIdx, zhiGuaChinese] = hexagramLookup[zhiGua];
         const plan = await getIchingMusicPlan({
           question,
-          benGua,
-          zhiGua,
+          benGuaIdx,
+          zhiGuaIdx,
           changingLines,
         });
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import CastingSoundEngine from "../components/CastingSoundEngine";
 import { useIching } from "../context/IchingContext";
@@ -43,19 +44,40 @@ export default function CastingPage() {
   const [tossingRow, setTossingRow] = useState(null);
   const [hexagramComplete, setHexagramComplete] = useState(false);
   const [triggerLineMelody, setTriggerLineMelody] = useState(null);
+  const {
+    question,
+    benGua,
+    setBenGua,
+    zhiGua,
+    setZhiGua,
+    changingLines,
+    setChangingLines,
+  } = useIching();
+  const navigate = useNavigate();
 
-  // const {
-  //   question,
-  //   benGua,
-  //   setBenGua,
-  //   zhiGua,
-  //   setZhiGua,
-  //   changingLines,
-  //   setChangingLines,
-  // } = useIching();
-  // setBenGua(Number(e.target.value)
-  // setZhiGua(Number(e.target.value)
-  // setChangingLines(parsedChanging);
+  const setIchingContext = () => {
+    console.log(results);
+
+    let changingLines = [];
+    let benGua = []; // before change
+    let zhiGua = []; // after change
+    Object.values(results).forEach((rowResult, rowIdx) => {
+      benGua.push(rowResult.startsWith("yang") ? 1 : 0); // BenGua looks at yang/yin before change
+      if (rowResult.endsWith("_")) {
+        changingLines.push(rowIdx+1); // For LLM to interpret; starts from 1 not 0.
+        zhiGua.push(rowResult.startsWith("yang") ? 0 : 1); // "yang_" old yang change to yin, or "yin_" old yin changing to yang
+      } else {
+        zhiGua.push(rowResult.startsWith("yang") ? 1 : 0); // "yang" continues to be "yang"; "yin" continues to be "yin" (no change)
+      }
+    });
+
+    const benGuaSeq = benGua.reverse().join('');
+    const zhiGuaSeq = zhiGua.reverse().join('');
+    console.log(`Setting BenGua=${benGuaSeq}, ZhiGua=${zhiGuaSeq}, changingLines=${changingLines}`)
+    setBenGua(benGuaSeq);
+    setZhiGua(zhiGuaSeq);
+    setChangingLines(changingLines);
+  }
 
   // Reset trigger after sound engine consumes it
   useEffect(() => {
@@ -64,6 +86,12 @@ export default function CastingPage() {
       return () => clearTimeout(timer);
     }
   }, [triggerLineMelody]);
+
+  useEffect(() => {
+    if (benGua && zhiGua) {
+      navigate("/interpretation");
+    }
+  }, [benGua, zhiGua]);
 
   const tossCoins = (row) => {
     setTossingRow(row);
@@ -87,7 +115,7 @@ export default function CastingPage() {
 
       if (row < 5) setRows((prev) => [...prev, row + 1]);
       else setHexagramComplete(true);
-    }, 2000); // timeout consistent with the duration of the animation-flip CSS
+    }, 100); // timeout consistent with the duration of the animation-flip CSS
   };
 
   const renderCoinFace = (face) => {
@@ -160,8 +188,7 @@ export default function CastingPage() {
         className={`bottom-8 mt-10 px-6 py-3 bg-black text-white rounded-2xl shadow-lg hover:bg-gray-800 transition relative z-10
           ${hexagramComplete ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => {
-          console.log(results);
-          window.location.href = "/interpretation";
+          setIchingContext();
         }}
       >
         Interpret
