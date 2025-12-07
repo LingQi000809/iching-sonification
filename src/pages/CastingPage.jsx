@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import BreathingOracle from "../components/BreathingOracle";
+import CastingSoundEngine from "../components/CastingSoundEngine";
 
 const lineStyles = {
   yang: (
@@ -40,6 +41,15 @@ export default function CastingPage() {
   const [coinFaces, setCoinFaces] = useState({}); // store H/T per row
   const [tossingRow, setTossingRow] = useState(null);
   const [hexagramComplete, setHexagramComplete] = useState(false);
+  const [triggerLineMelody, setTriggerLineMelody] = useState(null);
+
+  // Reset trigger after sound engine consumes it
+  useEffect(() => {
+    if (triggerLineMelody !== null) {
+      const timer = setTimeout(() => setTriggerLineMelody(null), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [triggerLineMelody]);
 
   const tossCoins = (row) => {
     setTossingRow(row);
@@ -58,6 +68,7 @@ export default function CastingPage() {
 
       setResults((prev) => ({ ...prev, [row]: lineType }));
       setCoinFaces((prev) => ({ ...prev, [row]: coins }));
+      setTriggerLineMelody({ rowIndex: row, coinSum: sum });
       setTossingRow(null);
 
       if (row < 5) setRows((prev) => [...prev, row + 1]);
@@ -80,6 +91,9 @@ export default function CastingPage() {
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-end bg-gradient-to-b from-amber-50 to-red-100 font-serif p-10">
+
+      <CastingSoundEngine triggerLineMelody={triggerLineMelody} />
+
       {/* background oracle visual */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
