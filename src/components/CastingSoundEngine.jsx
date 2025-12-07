@@ -7,12 +7,12 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
   const transportStarted = useRef(false);
 
   // --------------------
-  // 1. Load Instruments
+  //   Load Instruments
   // --------------------
   useEffect(() => {
     async function loadInstruments() {
       instrumentsRef.current = {
-        drum: await loadSFZ("taiko_drum"),
+        taiko: await loadSFZ("taiko_drum"),
         guzheng: await loadSFZ("orchestral_harp"),
         pipa: await loadSFZ("acoustic_guitar_nylon"),
         dizi: await loadSFZ("flute"),
@@ -40,9 +40,11 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
 
 
   // --------------------------
-  // 2. Pentatonic Scale
+  //     Pentatonic Scale
   // --------------------------
+  const instrumentOrder = ["taiko", "koto", "shakuhachi", "shamisen", "dizi", "pipa"];
   const pent = ["C", "D", "E", "G", "A"];
+//   const pent = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const note = (deg, oct=4) => pent[(deg % pent.length + pent.length) % pent.length] + oct;
 
   // --------------------------
@@ -53,38 +55,14 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
 
     for (let i=0;i<7;i++){
       const r = Math.random();
-      if (coin === 3) { cur += (r<0.7 ? 1 : -1); }          // Upward bias
-      else if (coin === 0){ cur += (r<0.7 ? -1 : 1); }      // Downward bias
-      else { cur += (r<0.33?1:r<0.66?-1:0); }               // Neutral / Changing
+      if (coin === 3) { cur += (r<0.8 ? 1 : -1); }          // All Yang - Upward bias
+      else if (coin === 0){ cur += (r<0.8 ? -1 : 1); }      // All Yin - Downward bias
+      else { cur += (r<0.4 ? 1 : r<0.8 ? -1 : 0); }         // Neutral / Changing
       out.push(cur);
     }
     return out;
   }
-  const instrumentOrder = ["drum", "koto", "shakuhachi", "shamisen", "dizi", "pipa"];
 
-  // --------------------------
-  // 4. Called by parent when a line is cast
-  // --------------------------
-  useEffect(() => {
-    if (triggerLineMelody == null) return;
-
-    const startTransportAndLoop = async () => {
-        if (!transportStarted.current) {
-        await Tone.start(); // unlock AudioContext
-        const transport = Tone.getContext().transport;
-        transport.bpm.value = 80;
-        await transport.start("+0.1");
-        transportStarted.current = true;
-        }
-
-        const { rowIndex, coinSum } = triggerLineMelody;
-        console.log(`Triggered to generate melody for row ${rowIndex} with coin sum of ${coinSum}`)
-        startLineLoop(rowIndex, coinSum);
-    };
-
-    startTransportAndLoop();
-
-  }, [triggerLineMelody]);
 
   // --------------------------
   // 5. Start Line Loop
@@ -113,7 +91,7 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
     console.log(`Row ${row} rhythm: ${rhythm}`)
 
     // FADE IN instrument
-    inst.volume.value = -30;
+    inst.volume.value = -20;
     inst.volume.linearRampToValueAtTime(-10, Tone.now() + 2);
 
     // Create Loop
@@ -121,8 +99,32 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
       melody.forEach((pitch,i)=>{
         inst.triggerAttackRelease(pitch, "8n", time + i*stepTime);
       });
-    }, melody.length * stepTime).start(0);  // <-- IMPORTANT: always start at Transport 0 for alignment
+    }, melody.length * stepTime).start(0);  // always start at Transport 0 for alignment
   }
+
+  // --------------------------
+  //   When a line is cast...
+  // --------------------------
+  useEffect(() => {
+    if (triggerLineMelody == null) return;
+
+    const startTransportAndLoop = async () => {
+        if (!transportStarted.current) {
+        await Tone.start(); // unlock AudioContext
+        const transport = Tone.getContext().transport;
+        transport.bpm.value = 80;
+        await transport.start("+0.1");
+        transportStarted.current = true;
+        }
+
+        const { rowIndex, coinSum } = triggerLineMelody;
+        console.log(`Triggered the sonification for row ${rowIndex} with coin sum of ${coinSum}`)
+        startLineLoop(rowIndex, coinSum);
+    };
+
+    startTransportAndLoop();
+
+  }, [triggerLineMelody]);
 
   return null;
 }
