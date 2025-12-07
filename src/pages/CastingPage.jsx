@@ -233,7 +233,7 @@ export default function CastingPage() {
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
           }`}
-        onClick={setIchingContext()}
+        onClick={() => setIchingContext()}
       >
         Interpret
       </button>
