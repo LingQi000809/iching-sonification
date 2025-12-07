@@ -77,7 +77,16 @@ export function IchingProvider({ children }) {
   const [benGua, setBenGua] = useState(null);
   const [zhiGua, setZhiGua] = useState(null);
   const [changingLines, setChangingLines] = useState([]);
-  const [musicPlan, setMusicPlan] = useState(null); // Gemini 返回的解释+音乐参数
+  const [musicPlan, setMusicPlan] = useState(null); 
+
+
+  const resetAll = () => {
+    setQuestion("");
+    setBenGua(null);
+    setZhiGua(null);
+    setChangingLines([]);
+    setMusicPlan(null);
+  };
 
   const value = {
     question,
@@ -90,10 +99,13 @@ export function IchingProvider({ children }) {
     setChangingLines,
     musicPlan,
     setMusicPlan,
+    resetAll,
   };
 
   return (
-    <IchingContext.Provider value={value}>{children}</IchingContext.Provider>
+    <IchingContext.Provider value={value}>
+      {children}
+    </IchingContext.Provider>
   );
 }
 

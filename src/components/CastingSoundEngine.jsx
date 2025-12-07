@@ -1,14 +1,27 @@
 import { useEffect, useRef } from "react";
 import * as Tone from "tone";
 
+//
+// --- GLOBAL EFFECT BUS (basic reverb + compressor) ---
+//   Individual lines will get their own stereo pan + reverb send level.
+//   This global bus keeps everything cohesive.
+//
+const globalReverb = new Tone.Reverb({
+  decay: 4,
+  preDelay: 0.1,
+  wet: 0.25,
+}).toDestination();
+
+const masterComp = new Tone.Compressor(-12, 3).connect(globalReverb);
+
 export default function CastingSoundEngine({ triggerLineMelody }) {
   const loopsRef = useRef({});
   const instrumentsRef = useRef({});
   const transportStarted = useRef(false);
 
-  // --------------------
-  //   Load Instruments
-  // --------------------
+  // -----------------------------------------------------------
+  // Load sampler instruments with soft envelope + connect to bus
+  // -----------------------------------------------------------
   useEffect(() => {
     async function loadInstruments() {
       instrumentsRef.current = {
@@ -21,109 +34,176 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
         shamisen: await loadSFZ("shamisen"),
       };
     }
-
     loadInstruments();
   }, []);
 
   async function loadSFZ(name) {
-    return new Tone.Sampler({
-      urls: {
-        C4: `${name}-mp3/C4.mp3`,
-        D4: `${name}-mp3/D4.mp3`,
-        E4: `${name}-mp3/E4.mp3`,
-        G4: `${name}-mp3/G4.mp3`,
-        A4: `${name}-mp3/A4.mp3`
-      },
-      baseUrl: `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/`,
-    }).toDestination();
+    // Slightly softened sampler
+    const sampler = new Tone.Sampler(
+      {
+        urls: {
+          C4: `${name}-mp3/C4.mp3`,
+          D4: `${name}-mp3/D4.mp3`,
+          E4: `${name}-mp3/E4.mp3`,
+          G4: `${name}-mp3/G4.mp3`,
+          A4: `${name}-mp3/A4.mp3`,
+        },
+        baseUrl: `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/`,
+        attack: 0.03,
+        release: 1.8,
+      }
+    );
+
+    // Each sampler goes through a per-instrument panner → master chain
+    const pan = new Tone.Panner(0).connect(masterComp);
+    sampler.connect(pan);
+    sampler._pan = pan; // save reference to modify later
+
+    return sampler;
   }
 
-
-  // --------------------------
-  //     Pentatonic Scale
-  // --------------------------
+  // -----------------------------------------------------------
+  // Pentatonic + helpers
+  // -----------------------------------------------------------
   const instrumentOrder = ["taiko", "koto", "shakuhachi", "shamisen", "dizi", "pipa"];
   const pent = ["C", "D", "E", "G", "A"];
-//   const pent = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const note = (deg, oct=4) => pent[(deg % pent.length + pent.length) % pent.length] + oct;
+  const note = (deg, oct = 4) =>
+    pent[(deg % pent.length + pent.length) % pent.length] + oct;
 
-  // --------------------------
-  // 3. Pattern rules 
-  // --------------------------
+  // -----------------------------------------------------------
+  // Generate melodic contour biased by yin/yang (coinSum)
+  // -----------------------------------------------------------
   function patternRandom(start, coin) {
-    let out = [start]; let cur = start;
+    let out = [start];
+    let cur = start;
 
-    for (let i=0;i<7;i++){
+    for (let i = 0; i < 7; i++) {
       const r = Math.random();
-      if (coin === 3) { cur += (r<0.8 ? 1 : -1); }          // All Yang - Upward bias
-      else if (coin === 0){ cur += (r<0.8 ? -1 : 1); }      // All Yin - Downward bias
-      else { cur += (r<0.4 ? 1 : r<0.8 ? -1 : 0); }         // Neutral / Changing
+      if (coin === 3) cur += r < 0.8 ? 1 : -1;       // old yang → rising
+      else if (coin === 0) cur += r < 0.8 ? -1 : 1;  // old yin → falling
+      else cur += r < 0.4 ? 1 : r < 0.8 ? -1 : 0;    // neutral
       out.push(cur);
     }
     return out;
   }
 
-
-  // --------------------------
-  // 5. Start Line Loop
-  // --------------------------
+  // -----------------------------------------------------------
+  // Start a loop aligned to bar beginning (no chaos)
+  // -----------------------------------------------------------
   function startLineLoop(row, coin) {
     const instName = instrumentOrder[row];
     const inst = instrumentsRef.current[instName];
     if (!inst) return;
 
-    // Stop previous loop if it exists
+    // Stop previous loop if exists
     if (loopsRef.current[row]) {
-        console.log(`Found existing loop for row ${row}; stopping it.`)
-        loopsRef.current[row].stop();
-        loopsRef.current[row].dispose();
+      loopsRef.current[row].stop();
+      loopsRef.current[row].dispose();
     }
 
-    // Generate melody degrees
-    const startDeg = Math.floor(Math.random()*pent.length);
+    // ------------------------------
+    // Melody degrees + phrase length
+    // ------------------------------
+    const startDeg = Math.floor(Math.random() * pent.length);
     const degs = patternRandom(startDeg, coin);
-    const melody = degs.map(d=>note(d, 4 + (row%2)));
-    console.log(`Row ${row} melody: ${melody}`)
 
-    // Rhythm
-    const rhythm = ["4n","8n","8n","16n","2n"][Math.floor(Math.random()*5)];
-    const stepTime = Tone.Time(rhythm);
-    console.log(`Row ${row} rhythm: ${rhythm}`)
+    // coinSum affects phrase length
+    let phraseLength;
+    if (coin === 3) phraseLength = 6 + Math.floor(Math.random() * 3); // old yang → longer (6–8)
+    else if (coin === 0) phraseLength = 3 + Math.floor(Math.random() * 2); // old yin → shorter (3–4)
+    else phraseLength = 4 + Math.floor(Math.random() * 3); // neutral → medium (4–6)
 
-    // FADE IN instrument
-    inst.volume.value = -20;
-    inst.volume.linearRampToValueAtTime(-10, Tone.now() + 2);
+    const truncDegs = degs.slice(0, phraseLength);
+    const melody = truncDegs.map((d) => note(d, 4 + (row % 2)));
 
-    // Create Loop
-    loopsRef.current[row] = new Tone.Loop((time)=>{
-      melody.forEach((pitch,i)=>{
-        inst.triggerAttackRelease(pitch, "8n", time + i*stepTime);
+    // ------------------------------
+    // Duration logic (yin/yang style)
+    // ------------------------------
+    let durChoices;
+
+    if (coin === 3) {
+      // old yang → long, floating notes
+      durChoices = ["8n", "4n", "2n"];
+    } else if (coin === 0) {
+      // old yin → short, sparse, more silence
+      durChoices = ["16n", "16n", "8n", "rest"];
+    } else {
+      durChoices = ["16n", "8n", "8n", "4n"];
+    }
+
+    const durations = melody.map(() => {
+      const pick = durChoices[Math.floor(Math.random() * durChoices.length)];
+      if (pick === "rest") return 0; // silent gap
+      return Tone.Time(pick).toSeconds();
+    });
+
+    const totalDuration = durations.reduce((a, b) => a + b, 0.001);
+
+    // ------------------------------
+    // Stereo & space based on row
+    // ------------------------------
+    const pan = [-0.4, -0.2, 0, 0.2, 0.35, 0.45][row];
+    const reverbWet = [0.15, 0.2, 0.25, 0.3, 0.35, 0.4][row];
+
+    inst._pan.pan.rampTo(pan, 1);
+    globalReverb.wet.rampTo(reverbWet, 2);
+
+    // ------------------------------
+    // Fade-in volume
+    // ------------------------------
+    inst.volume.value = -18;
+    inst.volume.linearRampToValueAtTime(-10, Tone.now() + 1.5);
+
+    // ------------------------------
+    // Loop aligned to upcoming bar
+    // ------------------------------
+    const startTime = Tone.Time("1m").toSeconds() * 1; 
+    // OR simply: const startTime = Tone.Transport.nextSubdivision("1m");
+
+    loopsRef.current[row] = new Tone.Loop((time) => {
+      let cursor = 0;
+      melody.forEach((pitch, i) => {
+        const dur = durations[i];
+
+        if (dur === 0) {
+          cursor += Tone.Time("16n").toSeconds(); // small rest
+          return;
+        }
+
+        const jitter = (Math.random() - 0.5) * 0.02;
+        const velocity = 0.6 + Math.random() * 0.25;
+
+        inst.triggerAttackRelease(
+          pitch,
+          dur,
+          time + cursor + jitter,
+          velocity
+        );
+
+        cursor += dur;
       });
-    }, melody.length * stepTime).start(0);  // always start at Transport 0 for alignment
+    }, totalDuration).start(startTime);
   }
 
-  // --------------------------
-  //   When a line is cast...
-  // --------------------------
+  // -----------------------------------------------------------
+  // Trigger logic
+  // -----------------------------------------------------------
   useEffect(() => {
     if (triggerLineMelody == null) return;
 
-    const startTransportAndLoop = async () => {
-        if (!transportStarted.current) {
-        await Tone.start(); // unlock AudioContext
-        const transport = Tone.getContext().transport;
-        transport.bpm.value = 80;
-        await transport.start("+0.1");
+    async function startTransport() {
+      if (!transportStarted.current) {
+        await Tone.start();
+        Tone.Transport.bpm.value = 80;
+        await Tone.Transport.start();
         transportStarted.current = true;
-        }
+      }
 
-        const { rowIndex, coinSum } = triggerLineMelody;
-        console.log(`Triggered the sonification for row ${rowIndex} with coin sum of ${coinSum}`)
-        startLineLoop(rowIndex, coinSum);
-    };
+      const { rowIndex, coinSum } = triggerLineMelody;
+      startLineLoop(rowIndex, coinSum);
+    }
 
-    startTransportAndLoop();
-
+    startTransport();
   }, [triggerLineMelody]);
 
   return null;

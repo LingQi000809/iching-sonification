@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";       
 import BreathingOracle from "../components/BreathingOracle";
 import CastingSoundEngine from "../components/CastingSoundEngine";
 import { useIching } from "../context/IchingContext";
@@ -34,7 +34,7 @@ const lineStyles = {
       </div>
       <div className="w-3 h-3 bg-black rounded-full"></div> {/* changing yin circle */}
     </div>
-  )
+  ),
 };
 
 export default function CastingPage() {
@@ -52,6 +52,7 @@ export default function CastingPage() {
     setZhiGua,
     changingLines,
     setChangingLines,
+    resetAll,
   } = useIching();
   const navigate = useNavigate();
 
@@ -79,6 +80,11 @@ export default function CastingPage() {
     setChangingLines(changingLines);
   }
 
+  const handleStartOver = () => {
+    resetAll();
+    navigate("/");                          
+  };
+
   // Reset trigger after sound engine consumes it
   useEffect(() => {
     if (triggerLineMelody !== null) {
@@ -104,9 +110,9 @@ export default function CastingPage() {
       // determine line type (if not all are head or tail, take the lesser's type)
       let lineType = null;
       if (sum === 3) lineType = "yang_"; // 3 head 0 tail -> old yang; pending change to yin
-      if (sum === 2) lineType = "yin"; // 2 head 1 tail (less tail) -> young yin
-      if (sum === 1) lineType = "yang"; // 1 head 2 tail (less head) -> young yang
-      if (sum === 0) lineType = "yin_"; // 0 head 3 tail -> old yin; pending change to yang
+      if (sum === 2) lineType = "yin";   // 2 head 1 tail -> young yin
+      if (sum === 1) lineType = "yang";  // 1 head 2 tail -> young yang
+      if (sum === 0) lineType = "yin_";  // 0 head 3 tail -> old yin; pending change to yang
 
       setResults((prev) => ({ ...prev, [row]: lineType }));
       setCoinFaces((prev) => ({ ...prev, [row]: coins }));
@@ -120,20 +126,34 @@ export default function CastingPage() {
 
   const renderCoinFace = (face) => {
     return (
-    <>
-      <circle cx="50" cy="50" r="48" fill={face === "H" ? "#f7e9a0" : "#d4af37"} stroke="#b08a32" strokeWidth="6" />
-      <rect x="35" y="35" width="30" height="30" rx="2" fill="#704e1a" />
-      {/* Head/Tail label */}
-      <text x="50" y="85" textAnchor="middle" fontSize="18" fill="black" opacity="0.5" fontWeight="bold">
-        {face}
-      </text>
-    </>
+      <>
+        <circle
+          cx="50"
+          cy="50"
+          r="48"
+          fill={face === "H" ? "#f7e9a0" : "#d4af37"}
+          stroke="#b08a32"
+          strokeWidth="6"
+        />
+        <rect x="35" y="35" width="30" height="30" rx="2" fill="#704e1a" />
+        {/* Head/Tail label */}
+        <text
+          x="50"
+          y="85"
+          textAnchor="middle"
+          fontSize="18"
+          fill="black"
+          opacity="0.5"
+          fontWeight="bold"
+        >
+          {face}
+        </text>
+      </>
     );
-  }
+  };
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-end bg-gradient-to-b from-amber-50 to-red-100 font-serif p-10">
-
       <CastingSoundEngine triggerLineMelody={triggerLineMelody} />
 
       {/* background oracle visual */}
@@ -144,21 +164,36 @@ export default function CastingPage() {
         {rows.map((row) => (
           <div key={row} className="flex items-center space-x-6">
             {[0, 1, 2].map((i) => (
-            <svg
-              key={i}
-              width="60"
-              height="60"
-              viewBox="0 0 100 100"
-              className={tossingRow === row ? "animate-flip" : ""}
-            >
-              {coinFaces[row] ? renderCoinFace(coinFaces[row][i]) 
-              : (
-                <>
-                  <circle cx="50" cy="50" r="48" fill="#dcdcdcff" stroke="#959595ff" strokeWidth="6" />
-                  <rect x="35" y="35" width="30" height="30" rx="2" fill="#959595ff" />
-                </>
-              )}
-            </svg>
+              <svg
+                key={i}
+                width="60"
+                height="60"
+                viewBox="0 0 100 100"
+                className={tossingRow === row ? "animate-flip" : ""}
+              >
+                {coinFaces[row] ? (
+                  renderCoinFace(coinFaces[row][i])
+                ) : (
+                  <>
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="48"
+                      fill="#dcdcdcff"
+                      stroke="#959595ff"
+                      strokeWidth="6"
+                    />
+                    <rect
+                      x="35"
+                      y="35"
+                      width="30"
+                      height="30"
+                      rx="2"
+                      fill="#959595ff"
+                    />
+                  </>
+                )}
+              </svg>
             ))}
 
             {/* toss button OR hexagram line */}
@@ -172,7 +207,7 @@ export default function CastingPage() {
                   Toss
                 </button>
                 {/* transparent dummy object for alignment with generated lines */}
-                <div className="w-3 h-3 bg-black rounded-full opacity-0"></div> 
+                <div className="w-3 h-3 bg-black rounded-full opacity-0"></div>
               </div>
             ) : (
               <div className="ml-4 min-h-6 flex items-center">
@@ -183,13 +218,22 @@ export default function CastingPage() {
         ))}
       </div>
 
-      {/* interpret button */}
-      <button 
+      {/* Start Over 按钮 */}
+      <button
+        onClick={handleStartOver}
+        className="absolute top-4 left-4 px-4 py-2 rounded-full border border-white/60 bg-black/40 text-white text-sm hover:bg-black/70 transition"
+      >
+        Start Over
+      </button>
+
+      <button
         className={`bottom-8 mt-10 px-6 py-3 bg-black text-white rounded-2xl shadow-lg hover:bg-gray-800 transition relative z-10
-          ${hexagramComplete ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => {
-          setIchingContext();
-        }}
+          ${
+            hexagramComplete
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }`}
+        onClick={setIchingContext()}
       >
         Interpret
       </button>
