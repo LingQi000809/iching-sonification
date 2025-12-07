@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import BreathingOracle from "../components/BreathingOracle";
 import CastingSoundEngine from "../components/CastingSoundEngine";
+import { useIching } from "../context/IchingContext";
 
 const lineStyles = {
   yang: (
@@ -42,6 +43,19 @@ export default function CastingPage() {
   const [tossingRow, setTossingRow] = useState(null);
   const [hexagramComplete, setHexagramComplete] = useState(false);
   const [triggerLineMelody, setTriggerLineMelody] = useState(null);
+
+  // const {
+  //   question,
+  //   benGua,
+  //   setBenGua,
+  //   zhiGua,
+  //   setZhiGua,
+  //   changingLines,
+  //   setChangingLines,
+  // } = useIching();
+  // setBenGua(Number(e.target.value)
+  // setZhiGua(Number(e.target.value)
+  // setChangingLines(parsedChanging);
 
   // Reset trigger after sound engine consumes it
   useEffect(() => {
@@ -87,7 +101,7 @@ export default function CastingPage() {
       </text>
     </>
     );
-  };
+  }
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-end bg-gradient-to-b from-amber-50 to-red-100 font-serif p-10">
