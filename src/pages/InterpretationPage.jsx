@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";           // ⭐ 新增
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching } from "../context/IchingContext";
 import { getIchingMusicPlan } from "../ichingToMusic";
@@ -12,7 +13,15 @@ export default function InterpretationPage() {
     changingLines,
     musicPlan,
     setMusicPlan,
+    resetAll,                                          // ⭐ 新增
   } = useIching();
+
+  const navigate = useNavigate();                      // ⭐ 新增
+
+  const handleStartOver = () => {
+    resetAll();
+    navigate("/");                                     // ⭐ 回首页
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,6 +85,15 @@ export default function InterpretationPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden text-black bg-gradient-to-b from-amber-50 via-white to-slate-100 yijing-text">
+      
+      {/* ⭐ Start Over 按钮（左上角） */}
+      <button
+        onClick={handleStartOver}
+        className="absolute top-4 left-4 z-50 px-4 py-2 rounded-full border border-white/60 bg-black/40 text-white text-sm hover:bg-black/70 transition"
+      >
+        Start Over
+      </button>
+
       {/* 背景呼吸球 */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
@@ -85,7 +103,7 @@ export default function InterpretationPage() {
           className="w-80 h-80 md:w-96 md:h-96 rounded-full 
           bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.85),transparent_60%),radial-gradient(circle_at_70%_70%,rgba(251,191,36,0.7),transparent_60%)]
           mix-blend-screen blur-3xl opacity-80 animate-spin"
-          style={{ animationDuration: "60s" }}   // ⭐ 慢速旋转：60 秒一圈
+          style={{ animationDuration: "60s" }}
         />
       </div>
 
@@ -152,8 +170,7 @@ export default function InterpretationPage() {
 
             <h3 className="text-base font-semibold mb-1">Interpretation (English)</h3>
             <p className="text-sm leading-relaxed whitespace-pre-wrap italic mb-4 text-black/75">
-              {musicPlan.interpretation_en ||
-                "No English interpretation found."}
+              {musicPlan.interpretation_en || "No English interpretation found."}
             </p>
 
             {/* Debug JSON */}
