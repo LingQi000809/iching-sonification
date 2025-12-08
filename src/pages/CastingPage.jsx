@@ -147,7 +147,7 @@ export default function CastingPage() {
       } else {
         setHexagramComplete(true);
       }
-    }, 100);
+    }, 2000);
   };
 
   const renderCoinFace = (face) => {

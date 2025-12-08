@@ -175,6 +175,7 @@ export default function CastingSoundEngine() {
 
     const truncDegs = degs.slice(0, phraseLength);
     const melody = truncDegs.map((d) => note(d, 4 + (row % 2)));
+    console.log(`Generated pitches for row ${row}: ${melody}`);
 
     // ------------------------------
     // Duration logic (yin/yang style)
@@ -196,6 +197,7 @@ export default function CastingSoundEngine() {
       if (pick === "rest") return 0; // silent gap
       return Tone.Time(pick).toSeconds();
     });
+    console.log(`Generated durations for row ${row}: ${durations}`);
 
     const totalDuration = durations.reduce((a, b) => a + b, 0.001);
 
@@ -212,12 +214,12 @@ export default function CastingSoundEngine() {
     // Fade-in volume
     // ------------------------------
     inst.volume.value = -18;
-    inst.volume.linearRampToValueAtTime(-10, Tone.now() + 1.5);
+    inst.volume.linearRampToValueAtTime(-10, Tone.now() + 1);
 
     // ------------------------------
     // Loop aligned to upcoming bar
     // ------------------------------
-    const startTime = Tone.Time("1m").toSeconds() * 1;
+    const startTime = row===0 ? 0 : Tone.Time("1m").toSeconds() * 1;
     // OR simply: const startTime = Tone.Transport.nextSubdivision("1m");
 
     loopsRef.current[row] = new Tone.Loop((time) => {
