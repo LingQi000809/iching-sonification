@@ -4,6 +4,9 @@ import BreathingOracle from "../components/BreathingOracle";
 import { useIching, hexagramLookup } from "../context/IchingContext";
 import { getIchingMusicPlan } from "../ichingToMusic";
 import { playLyriaMusic, stopLyriaMusic } from "../lyriaPlayer";
+import TooltipButton from "../components/TooltipButton";
+
+const tooltipText = "Text Placeholder for Interpretation Stage";
 
 const lineStyles = {
   yang: (
@@ -137,6 +140,9 @@ export default function InterpretationPage() {
         Start Over
       </button>
 
+      {/* Tooltip Button */}
+      <TooltipButton text={tooltipText}/>
+
       {/* Background Oracle */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
@@ -252,12 +258,16 @@ export default function InterpretationPage() {
 
         {/* RIGHT COLUMN — INTERPRETATION / LOADING / ERROR */}
         <div className="flex flex-col items-center justify-center text-center">
+        
+          <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75 text-center max-w-3xl text-m">
+            <span className="font-semibold">User Inquiry:</span> <span className="italic">{question}</span>
+          </p>
+
           {/* Interpretation Panel */}
           {!loading && !error && musicPlan && (
-            <div className="backdrop-blur-md bg-white/70 p-7 rounded-2xl shadow-xl max-w-2xl text-left space-y-5">
-              <h2 className="text-xl mb-3 text-center font-semibold">
-                I-Ching Interpretation
-              </h2>
+            <div className="backdrop-blur-md bg-white/70 p-7 rounded-2xl shadow-xl max-w-3xl text-left space-y-5">
+              
+              <h2 className="text-xl mb-3 text-center font-semibold">I-Ching Interpretation</h2>
 
               <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75">
                 {musicPlan.interpretation_en ||
@@ -287,14 +297,14 @@ export default function InterpretationPage() {
               </div>
             </div>
           )}
-
-          {/* Error */}
-          {error && (
-            <div className="text-red-600 text-lg bg-white/70 px-4 py-3 rounded-xl">
-              {error}
-            </div>
-          )}
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="text-red-600 text-lg bg-white/70 px-4 py-3 rounded-xl font-serif">
+            {error}
+          </div>
+        )}
       </div>
     </div>
   );

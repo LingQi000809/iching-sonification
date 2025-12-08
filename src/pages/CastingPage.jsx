@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching } from "../context/IchingContext";
+import TooltipButton from "../components/TooltipButton";
+
+const tooltipText = "Text Placeholder for Casting Stage";
 
 const lineStyles = {
   yang: (
@@ -224,8 +227,7 @@ export default function CastingPage() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => tossCoins(row)}
-                  className="w-32 font-serif py-2 bg-white/40 backdrop-blur rounded-xl shadow 
-                    hover:bg-white/60 transition flex justify-center"
+                  className="w-32 font-serif py-2 border-white/60 bg-black/40 text-white backdrop-blur text-black hover:bg-black/70 transition rounded-xl shadow flex justify-center"
                 >
                   Toss
                 </button>
@@ -249,9 +251,13 @@ export default function CastingPage() {
         Start Over
       </button>
 
+      {/* Tooltip Button */}
+      <TooltipButton text={tooltipText}/>
+
+
       {/* Interpret Button */}
       <button
-        className={`bottom-8 mt-10 px-6 py-3 bg-black text-white rounded-2xl shadow-lg hover:bg-gray-800 transition relative z-10
+        className={`bottom-8 mt-10 px-6 py-3 border-white/60 bg-black/40 text-white backdrop-blur text-black hover:bg-black/70 transition rounded-2xl shadow-lg relative z-10
           ${
             hexagramComplete
               ? "opacity-100 pointer-events-auto"
