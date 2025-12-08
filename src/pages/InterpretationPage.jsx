@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching, hexagramLookup } from "../context/IchingContext";
 import { getIchingMusicPlan } from "../ichingToMusic";
-import { playLyriaMusic } from "../lyriaPlayer";
+import { playLyriaMusic, stopLyriaMusic } from "../lyriaPlayer";
 
 const lineStyles = {
   yang: (
@@ -20,8 +20,8 @@ const lineStyles = {
       </div>
       <div className="w-3 h-2 bg-black rounded-full opacity-0"></div> {/* no change; transparent */}
     </div>
-  )
-}
+  ),
+};
 
 export default function InterpretationPage() {
   const {
@@ -31,47 +31,39 @@ export default function InterpretationPage() {
     changingLines,
     musicPlan,
     setMusicPlan,
-    resetAll,                                         
+    resetAll,
+    stopCastingMusic,
   } = useIching();
 
-  const navigate = useNavigate();                      
+  const navigate = useNavigate();
 
   const handleStartOver = () => {
+    // Stop casting music (Tone.js loops)
+    if (stopCastingMusic) {
+      stopCastingMusic();
+    }
+    // Stop Lyria RealTime audio
+    stopLyriaMusic();
+
     resetAll();
-    navigate("/");                                     
+    navigate("/");
   };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showDebug, setShowDebug] = useState(false);
 
-  // 环境音
-  const ambientRef = useRef(null);
-
   useEffect(() => {
-    const audio = new Audio("/ambient/iching_waiting.mp3");
-    audio.loop = true;
-    audio.volume = 0.25;
-    ambientRef.current = audio;
-  }, []);
+    let cancelled = false;
 
-  useEffect(() => {
     async function run() {
       try {
         setLoading(true);
         setError("");
 
-        // 播放等待环境音
-        if (ambientRef.current) {
-          try {
-            await ambientRef.current.play();
-          } catch (e) {
-            console.warn("ambient play failed:", e);
-          }
-        }
-
         const benGuaIdx = hexagramLookup[benGua][0];
         const zhiGuaIdx = hexagramLookup[zhiGua][0];
+
         const plan = await getIchingMusicPlan({
           question,
           benGuaIdx,
@@ -79,34 +71,48 @@ export default function InterpretationPage() {
           changingLines,
         });
 
+        if (cancelled) return;
+
         setMusicPlan(plan);
 
-        // 停掉环境音
-        if (ambientRef.current) {
-          ambientRef.current.pause();
-          ambientRef.current.currentTime = 0;
+        // Stop casting music so Lyria can take over
+        if (stopCastingMusic) {
+          stopCastingMusic();
         }
 
+        // Start Lyria music
         await playLyriaMusic(plan);
-        setLoading(false);
+
+        if (!cancelled) {
+          setLoading(false);
+        }
       } catch (e) {
         console.error(e);
-        if (ambientRef.current) {
-          ambientRef.current.pause();
-          ambientRef.current.currentTime = 0;
+
+        if (stopCastingMusic) {
+          stopCastingMusic();
         }
-        setError("The oracle did not speak this time. Please try again.");
-        setLoading(false);
+        stopLyriaMusic();
+
+        if (!cancelled) {
+          setError("The oracle did not speak this time. Please try again.");
+          setLoading(false);
+        }
       }
     }
 
     run();
-  }, []);
+
+    // Cleanup when leaving InterpretationPage (e.g., back / Start Over)
+    return () => {
+      stopLyriaMusic();
+    };
+  }, []); // only run once on mount
 
   function renderHexagram(lines) {
     if (!lines) return null;
 
-    const arr = Array.from(lines).map(n => Number(n));
+    const arr = Array.from(lines).map((n) => Number(n));
 
     return (
       <div className="flex flex-col items-center space-y-1">
@@ -123,7 +129,6 @@ export default function InterpretationPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden text-black bg-gradient-to-b from-amber-50 via-white to-slate-100 yijing-text">
-      
       {/* Start Over button */}
       <button
         onClick={handleStartOver}
@@ -173,18 +178,24 @@ export default function InterpretationPage() {
       )}
 
       {/* 内容区 */}
-      <div className={`absolute inset-0 flex z-20 p-6 items-center justify-center space-x-10 ${loading ? "opacity-0 pointer-events-none" : ""}`}>
-
+      <div
+        className={`absolute inset-0 flex z-20 p-6 items-center justify-center space-x-10 ${
+          loading ? "opacity-0 pointer-events-none" : ""
+        }`}
+      >
         {/* LEFT COLUMN — HEXAGRAMS */}
         <div className="shrink-0 flex flex-col justify-center items-center space-y-2 text-center">
-
           {/* Ben Gua */}
           {!loading && !error && (
             <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
-              <h3 className="text-xl font-semibold mb-2 text-black/80">BenGua (本卦)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-black/80">
+                BenGua (本卦)
+              </h3>
 
               <div className="flex flex-col items-center space-y-3">
-                <div className="transform translate-x-3">{renderHexagram(benGua)}</div>
+                <div className="transform translate-x-3">
+                  {renderHexagram(benGua)}
+                </div>
 
                 <div className="flex flex-col justify-center space-y-1">
                   <div className="text-black/80 font-medium text-xl">
@@ -202,18 +213,28 @@ export default function InterpretationPage() {
           {/* Changing Lines */}
           {!loading && !error && (
             <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
-              <h3 className="text-xl font-semibold mb-2 text-black/80">Changing Lines (动爻)</h3>
-              <div className="text-m mb-2 text-black/80">{changingLines.length?`${changingLines.join(", ")} (Bottom to Top)`:"None"} </div>
+              <h3 className="text-xl font-semibold mb-2 text-black/80">
+                Changing Lines (动爻)
+              </h3>
+              <div className="text-m mb-2 text-black/80">
+                {changingLines.length
+                  ? `${changingLines.join(", ")} (Bottom to Top)`
+                  : "None"}
+              </div>
             </div>
           )}
 
           {/* Zhi Gua */}
           {!loading && !error && (
             <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
-              <h3 className="text-xl font-semibold mb-2 text-black/80">ZhiGua (之卦)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-black/80">
+                ZhiGua (之卦)
+              </h3>
 
-              <div className="flex flex-col items-center space-y-3">
-                <div className="transform translate-x-3">{renderHexagram(zhiGua)}</div>
+              <div className="flex flex-col items中心 space-y-3">
+                <div className="transform translate-x-3">
+                  {renderHexagram(zhiGua)}
+                </div>
 
                 <div className="flex flex-col justify-center space-y-1">
                   <div className="text-black/80 font-medium text-xl">
@@ -231,15 +252,16 @@ export default function InterpretationPage() {
 
         {/* RIGHT COLUMN — INTERPRETATION / LOADING / ERROR */}
         <div className="flex flex-col items-center justify-center text-center">
-
           {/* Interpretation Panel */}
           {!loading && !error && musicPlan && (
             <div className="backdrop-blur-md bg-white/70 p-7 rounded-2xl shadow-xl max-w-2xl text-left space-y-5">
-
-              <h2 className="text-xl mb-3 text-center font-semibold">I-Ching Interpretation</h2>
+              <h2 className="text-xl mb-3 text-center font-semibold">
+                I-Ching Interpretation
+              </h2>
 
               <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75">
-                {musicPlan.interpretation_en || "No English interpretation found."}
+                {musicPlan.interpretation_en ||
+                  "No English interpretation found."}
               </p>
 
               <p className="text-m leading-relaxed whitespace-pre-wrap mb-3">

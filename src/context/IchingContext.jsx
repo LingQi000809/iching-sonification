@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 // Key: 6 lines top to bottom, concatenated; 
-// Value: [hexagram index for LLM to interpret, TraditionalChineseSymbol]
+// Value: [hexagram index for LLM to interpret, TraditionalChineseSymbol, English name]
 export const hexagramLookup = {
   "111111": [1, "乾", "Initiating"],
   "000000": [2, "坤", "Responding"],
@@ -68,7 +68,7 @@ export const hexagramLookup = {
   "001100": [62, "中孚", "Little Exceeding"],
   "010101": [63, "既濟", "Already Fulfilled"],
   "101010": [64, "未濟", "Not Yet Fulfilled"],
-}
+};
 
 const IchingContext = createContext(null);
 
@@ -77,15 +77,31 @@ export function IchingProvider({ children }) {
   const [benGua, setBenGua] = useState(null);
   const [zhiGua, setZhiGua] = useState(null);
   const [changingLines, setChangingLines] = useState([]);
-  const [musicPlan, setMusicPlan] = useState(null); 
+  const [musicPlan, setMusicPlan] = useState(null);
 
+  // Casting sound trigger (from CastingPage to sound engine)
+  const [triggerLineMelody, setTriggerLineMelody] = useState(null);
+
+  // Function registered by CastingSoundEngine to stop all its loops
+  const [castingStopper, setCastingStopper] = useState(null);
+
+  // Called by pages when casting music should stop (e.g. Lyria takes over, Start Over)
+  const stopCastingMusic = () => {
+    if (castingStopper) {
+      castingStopper();
+    }
+  };
 
   const resetAll = () => {
+    // Stop any ongoing casting music as part of a full reset
+    stopCastingMusic();
+
     setQuestion("");
     setBenGua(null);
     setZhiGua(null);
     setChangingLines([]);
     setMusicPlan(null);
+    setTriggerLineMelody(null);
   };
 
   const value = {
@@ -100,6 +116,12 @@ export function IchingProvider({ children }) {
     musicPlan,
     setMusicPlan,
     resetAll,
+
+    // casting sound related
+    triggerLineMelody,
+    setTriggerLineMelody,
+    stopCastingMusic,
+    setCastingStopper,
   };
 
   return (

@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";       
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
-import CastingSoundEngine from "../components/CastingSoundEngine";
 import { useIching } from "../context/IchingContext";
 
 const lineStyles = {
   yang: (
     <div className="flex items-center space-x-2">
       <div className="w-32 h-3 bg-black rounded-full"></div>
-      <div className="w-3 h-3 bg-black rounded-full opacity-0"></div> {/* no change; transparent */}
+      <div className="w-3 h-3 bg-black rounded-full opacity-0"></div>
     </div>
   ),
   yin: (
@@ -17,13 +16,13 @@ const lineStyles = {
         <div className="w-14 h-full bg-black rounded-full"></div>
         <div className="w-14 h-full bg-black rounded-full"></div>
       </div>
-      <div className="w-3 h-3 bg-black rounded-full opacity-0"></div> {/* no change; transparent */}
+      <div className="w-3 h-3 bg-black rounded-full opacity-0"></div>
     </div>
   ),
   yang_: (
     <div className="flex items-center space-x-2">
       <div className="w-32 h-3 bg-black rounded-full"></div>
-      <div className="w-3 h-3 bg-black rounded-full"></div> {/* changing yang circle */}
+      <div className="w-3 h-3 bg-black rounded-full"></div>
     </div>
   ),
   yin_: (
@@ -32,18 +31,18 @@ const lineStyles = {
         <div className="w-14 h-full bg-black rounded-full"></div>
         <div className="w-14 h-full bg-black rounded-full"></div>
       </div>
-      <div className="w-3 h-3 bg-black rounded-full"></div> {/* changing yin circle */}
+      <div className="w-3 h-3 bg-black rounded-full"></div>
     </div>
   ),
 };
 
 export default function CastingPage() {
-  const [rows, setRows] = useState([0]); // initially only bottom row
-  const [results, setResults] = useState({}); // store line results per row
-  const [coinFaces, setCoinFaces] = useState({}); // store H/T per row
+  const [rows, setRows] = useState([0]);              // initially only bottom row
+  const [results, setResults] = useState({});         // line results per row
+  const [coinFaces, setCoinFaces] = useState({});     // H/T per row
   const [tossingRow, setTossingRow] = useState(null);
   const [hexagramComplete, setHexagramComplete] = useState(false);
-  const [triggerLineMelody, setTriggerLineMelody] = useState(null);
+
   const {
     question,
     benGua,
@@ -53,75 +52,99 @@ export default function CastingPage() {
     changingLines,
     setChangingLines,
     resetAll,
+    triggerLineMelody,
+    setTriggerLineMelody,
   } = useIching();
+
   const navigate = useNavigate();
 
   const setIchingContext = () => {
     console.log(results);
 
-    let changingLines = [];
-    let benGua = []; // before change
-    let zhiGua = []; // after change
+    let changingLinesLocal = [];
+    let benGuaArr = []; // before change
+    let zhiGuaArr = []; // after change
+
+    // Note: Object.values keeps insertion order, which matches row order 0..5
     Object.values(results).forEach((rowResult, rowIdx) => {
-      benGua.push(rowResult.startsWith("yang") ? 1 : 0); // BenGua looks at yang/yin before change
+      // BenGua uses yang/yin before change
+      benGuaArr.push(rowResult.startsWith("yang") ? 1 : 0);
+
       if (rowResult.endsWith("_")) {
-        changingLines.push(rowIdx+1); // For LLM to interpret; starts from 1 not 0.
-        zhiGua.push(rowResult.startsWith("yang") ? 0 : 1); // "yang_" old yang change to yin, or "yin_" old yin changing to yang
+        // Changing line indices are 1-based from bottom to top for LLM
+        changingLinesLocal.push(rowIdx + 1);
+        // "yang_" → old yang will change to yin; "yin_" → old yin will change to yang
+        zhiGuaArr.push(rowResult.startsWith("yang") ? 0 : 1);
       } else {
-        zhiGua.push(rowResult.startsWith("yang") ? 1 : 0); // "yang" continues to be "yang"; "yin" continues to be "yin" (no change)
+        // "yang" stays yang; "yin" stays yin
+        zhiGuaArr.push(rowResult.startsWith("yang") ? 1 : 0);
       }
     });
 
-    const benGuaSeq = benGua.reverse().join('');
-    const zhiGuaSeq = zhiGua.reverse().join('');
-    console.log(`Setting BenGua=${benGuaSeq}, ZhiGua=${zhiGuaSeq}, changingLines=${changingLines}`)
+    const benGuaSeq = benGuaArr.reverse().join("");
+    const zhiGuaSeq = zhiGuaArr.reverse().join("");
+
+    console.log(
+      `Setting BenGua=${benGuaSeq}, ZhiGua=${zhiGuaSeq}, changingLines=${changingLinesLocal}`
+    );
+
     setBenGua(benGuaSeq);
     setZhiGua(zhiGuaSeq);
-    setChangingLines(changingLines);
-  }
+    setChangingLines(changingLinesLocal);
+  };
 
   const handleStartOver = () => {
     resetAll();
-    navigate("/");                          
+    navigate("/");
   };
 
-  // Reset trigger after sound engine consumes it
+  // Pulse triggerLineMelody (short-lived event) so engine only reacts once
   useEffect(() => {
     if (triggerLineMelody !== null) {
       const timer = setTimeout(() => setTriggerLineMelody(null), 50);
       return () => clearTimeout(timer);
     }
-  }, [triggerLineMelody]);
+  }, [triggerLineMelody, setTriggerLineMelody]);
 
+  // Once both hexagrams are set, go to interpretation page
   useEffect(() => {
     if (benGua && zhiGua) {
       navigate("/interpretation");
     }
-  }, [benGua, zhiGua]);
+  }, [benGua, zhiGua, navigate]);
 
   const tossCoins = (row) => {
     setTossingRow(row);
 
     setTimeout(() => {
-      // generate random HT results; Head=Yang; Tail=Yin
+      // Generate random HT results; Head = Yang; Tail = Yin
       const coins = [0, 0, 0].map(() => (Math.random() > 0.5 ? "H" : "T"));
-      const sum = coins.reduce((acc, c) => acc + (c === "H" ? 1 : 0), 0);
+      const sum = coins.reduce(
+        (acc, c) => acc + (c === "H" ? 1 : 0),
+        0
+      );
 
-      // determine line type (if not all are head or tail, take the lesser's type)
+      // Determine line type
       let lineType = null;
-      if (sum === 3) lineType = "yang_"; // 3 head 0 tail -> old yang; pending change to yin
-      if (sum === 2) lineType = "yin";   // 2 head 1 tail -> young yin
-      if (sum === 1) lineType = "yang";  // 1 head 2 tail -> young yang
-      if (sum === 0) lineType = "yin_";  // 0 head 3 tail -> old yin; pending change to yang
+      if (sum === 3) lineType = "yang_"; // 3 head 0 tail → old yang
+      if (sum === 2) lineType = "yin";   // 2 head 1 tail → young yin
+      if (sum === 1) lineType = "yang";  // 1 head 2 tail → young yang
+      if (sum === 0) lineType = "yin_";  // 0 head 3 tail → old yin
 
       setResults((prev) => ({ ...prev, [row]: lineType }));
       setCoinFaces((prev) => ({ ...prev, [row]: coins }));
+
+      // Trigger casting music for this line (global engine will respond)
       setTriggerLineMelody({ rowIndex: row, coinSum: sum });
+
       setTossingRow(null);
 
-      if (row < 5) setRows((prev) => [...prev, row + 1]);
-      else setHexagramComplete(true);
-    }, 100); // timeout consistent with the duration of the animation-flip CSS (2000)
+      if (row < 5) {
+        setRows((prev) => [...prev, row + 1]);
+      } else {
+        setHexagramComplete(true);
+      }
+    }, 100);
   };
 
   const renderCoinFace = (face) => {
@@ -136,7 +159,7 @@ export default function CastingPage() {
           strokeWidth="6"
         />
         <rect x="35" y="35" width="30" height="30" rx="2" fill="#704e1a" />
-        {/* Head/Tail label */}
+        {/* H/T label */}
         <text
           x="50"
           y="85"
@@ -154,9 +177,9 @@ export default function CastingPage() {
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-end bg-gradient-to-b from-amber-50 to-red-100 font-serif p-10">
-      <CastingSoundEngine triggerLineMelody={triggerLineMelody} />
+      {/* Global CastingSoundEngine is mounted in App.jsx, not here */}
 
-      {/* background oracle visual */}
+      {/* Background oracle visual */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
       {/* 6 rows rendered bottom → top */}
@@ -196,7 +219,7 @@ export default function CastingPage() {
               </svg>
             ))}
 
-            {/* toss button OR hexagram line */}
+            {/* Toss button OR hexagram line */}
             {!results[row] ? (
               <div className="flex items-center space-x-2">
                 <button
@@ -206,7 +229,7 @@ export default function CastingPage() {
                 >
                   Toss
                 </button>
-                {/* transparent dummy object for alignment with generated lines */}
+                {/* Dummy for alignment with generated lines */}
                 <div className="w-3 h-3 bg-black rounded-full opacity-0"></div>
               </div>
             ) : (
@@ -226,6 +249,7 @@ export default function CastingPage() {
         Start Over
       </button>
 
+      {/* Interpret Button */}
       <button
         className={`bottom-8 mt-10 px-6 py-3 bg-black text-white rounded-2xl shadow-lg hover:bg-gray-800 transition relative z-10
           ${
@@ -233,7 +257,7 @@ export default function CastingPage() {
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
           }`}
-        onClick={() => setIchingContext()}
+        onClick={setIchingContext}
       >
         Interpret
       </button>

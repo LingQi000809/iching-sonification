@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as Tone from "tone";
+import { useIching } from "../context/IchingContext";
 
 //
 // --- GLOBAL EFFECT BUS (basic reverb + compressor) ---
@@ -14,10 +15,65 @@ const globalReverb = new Tone.Reverb({
 
 const masterComp = new Tone.Compressor(-12, 3).connect(globalReverb);
 
-export default function CastingSoundEngine({ triggerLineMelody }) {
+export default function CastingSoundEngine() {
   const loopsRef = useRef({});
   const instrumentsRef = useRef({});
   const transportStarted = useRef(false);
+
+  const { triggerLineMelody, setCastingStopper } = useIching();
+
+  // -----------------------------------------------------------
+  // Helper: stop all casting loops and reset transport
+  // -----------------------------------------------------------
+  const stopAllCastingLoops = () => {
+    // Stop and dispose all loops
+    Object.values(loopsRef.current).forEach((loop) => {
+      if (!loop) return;
+      try {
+        loop.stop();
+        loop.dispose();
+      } catch (e) {
+        console.warn("Error stopping loop:", e);
+      }
+    });
+    loopsRef.current = {};
+
+    // Hard mute instruments to avoid long tails
+    Object.values(instrumentsRef.current).forEach((inst) => {
+      if (!inst) return;
+      try {
+        if (inst.volume) {
+          inst.volume.value = -60;
+        }
+      } catch (e) {
+        console.warn("Error muting instrument:", e);
+      }
+    });
+
+    // Stop and clear the transport
+    try {
+      Tone.Transport.stop();
+      Tone.Transport.cancel(0);
+    } catch (e) {
+      console.warn("Error stopping transport:", e);
+    }
+
+    // Allow a new run to start the transport again
+    transportStarted.current = false;
+  };
+
+  // -----------------------------------------------------------
+  // Register stopper into context so pages can call stopCastingMusic()
+  // -----------------------------------------------------------
+  useEffect(() => {
+    // Register on mount
+    setCastingStopper(() => stopAllCastingLoops);
+
+    // Clean up on unmount
+    return () => {
+      setCastingStopper(null);
+    };
+  }, [setCastingStopper]);
 
   // -----------------------------------------------------------
   // Load sampler instruments with soft envelope + connect to bus
@@ -88,7 +144,7 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
   }
 
   // -----------------------------------------------------------
-  // Start a loop aligned to bar beginning (no chaos)
+  // Start a loop aligned to bar beginning
   // -----------------------------------------------------------
   function startLineLoop(row, coin) {
     const instName = instrumentOrder[row];
@@ -97,8 +153,12 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
 
     // Stop previous loop if exists
     if (loopsRef.current[row]) {
-      loopsRef.current[row].stop();
-      loopsRef.current[row].dispose();
+      try {
+        loopsRef.current[row].stop();
+        loopsRef.current[row].dispose();
+      } catch (e) {
+        console.warn("Error stopping previous loop:", e);
+      }
     }
 
     // ------------------------------
@@ -157,7 +217,7 @@ export default function CastingSoundEngine({ triggerLineMelody }) {
     // ------------------------------
     // Loop aligned to upcoming bar
     // ------------------------------
-    const startTime = Tone.Time("1m").toSeconds() * 1; 
+    const startTime = Tone.Time("1m").toSeconds() * 1;
     // OR simply: const startTime = Tone.Transport.nextSubdivision("1m");
 
     loopsRef.current[row] = new Tone.Loop((time) => {
