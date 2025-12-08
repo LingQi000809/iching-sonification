@@ -82,7 +82,7 @@ export default function BreathingOracle({ size = 300, opacity = 0.5, maskOpacity
         <img src="public/transparent-ink2.png" alt="Decoration1" className="object-contain" />
       </div>
       <div className="absolute top-0 right-0 z-10 opacity-10 transform scale-x-[-1]">
-        <img src="public/transparent-ink1.png" alt="Decoration1" className="object-contain" />
+        <img src="public/transparent-ink1.png" alt="Decoration2" className="object-contain" />
       </div>
 
       {/* Fullscreen white mask */}
