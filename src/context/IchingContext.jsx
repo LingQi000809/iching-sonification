@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useState } from "react";
 
 // Key: 6 lines top to bottom, concatenated; 
-// Value: [hexagram index for LLM to interpret, TraditionalChineseSymbol, English name]
+// Value: [hexagram index for LLM to interpret, TraditionalChineseSymbol, English Interpretation]
+// Source: https://en.wikibooks.org/wiki/I_Ching/The_64_Hexagrams
 export const hexagramLookup = {
   "111111": [1, "乾", "Initiating"],
   "000000": [2, "坤", "Responding"],

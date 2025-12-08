@@ -258,10 +258,11 @@ export default function InterpretationPage() {
 
         {/* RIGHT COLUMN — INTERPRETATION / LOADING / ERROR */}
         <div className="flex flex-col items-center justify-center text-center">
-        
-          <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75 text-center max-w-3xl text-m">
-            <span className="font-semibold">User Inquiry:</span> <span className="italic">{question}</span>
-          </p>
+          {!loading && !error && (
+            <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75 text-center max-w-3xl text-m">
+              <span className="font-semibold">User Inquiry:</span> <span className="italic">{question}</span>
+            </p>
+          )}
 
           {/* Interpretation Panel */}
           {!loading && !error && musicPlan && (

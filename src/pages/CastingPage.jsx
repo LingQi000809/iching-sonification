@@ -225,9 +225,10 @@ export default function CastingPage() {
             {/* Toss button OR hexagram line */}
             {!results[row] ? (
               <div className="flex items-center space-x-2">
-                <button
+                <button 
+                  disabled={tossingRow !== null} 
                   onClick={() => tossCoins(row)}
-                  className="w-32 font-serif py-2 border-white/60 bg-black/40 text-white backdrop-blur text-black hover:bg-black/70 transition rounded-xl shadow flex justify-center"
+                  className="w-32 font-serif py-2 border-white/60 bg-black/40 text-white backdrop-blur text-black hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition rounded-xl shadow flex justify-center"
                 >
                   Toss
                 </button>
