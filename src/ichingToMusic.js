@@ -2,7 +2,7 @@
 import { aiClient } from "./aiClient";
 
 function buildIchingPrompt(params) {
-    const { question, benGua, zhiGua, changingLines } = params;
+    const { question, benGuaIdx, zhiGuaIdx, changingLines } = params;
 
     return `
 你是一位既懂《易经》、中国传统音乐，又懂氛围 / 冥想音乐制作的专家。
@@ -12,8 +12,8 @@ function buildIchingPrompt(params) {
 "${question}"
 
 占卜结果：
-- 本卦编号: ${benGua}
-- 之卦编号: ${zhiGua}
+- 本卦编号: ${benGuaIdx}
+- 之卦编号: ${zhiGuaIdx}
 - 动爻: ${
     changingLines && changingLines.length ? changingLines.join(", ") : "无或未知"
   }

@@ -121,7 +121,7 @@ export default function CastingPage() {
 
       if (row < 5) setRows((prev) => [...prev, row + 1]);
       else setHexagramComplete(true);
-    }, 100); // timeout consistent with the duration of the animation-flip CSS
+    }, 100); // timeout consistent with the duration of the animation-flip CSS (2000)
   };
 
   const renderCoinFace = (face) => {
@@ -218,7 +218,7 @@ export default function CastingPage() {
         ))}
       </div>
 
-      {/* Start Over 按钮 */}
+      {/* Start Over Button */}
       <button
         onClick={handleStartOver}
         className="absolute top-4 left-4 px-4 py-2 rounded-full border border-white/60 bg-black/40 text-white text-sm hover:bg-black/70 transition"

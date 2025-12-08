@@ -1,9 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";           // ⭐ 新增
+import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching, hexagramLookup } from "../context/IchingContext";
 import { getIchingMusicPlan } from "../ichingToMusic";
 import { playLyriaMusic } from "../lyriaPlayer";
+
+const lineStyles = {
+  yang: (
+    <div className="flex items-center space-x-2">
+      <div className="w-24 h-2 bg-black rounded-full"></div>
+      <div className="w-3 h-2 bg-black rounded-full opacity-0"></div> {/* no change; transparent */}
+    </div>
+  ),
+  yin: (
+    <div className="flex items-center space-x-2">
+      <div className="w-24 h-2 flex justify-between">
+        <div className="w-11 h-full bg-black rounded-full"></div>
+        <div className="w-11 h-full bg-black rounded-full"></div>
+      </div>
+      <div className="w-3 h-2 bg-black rounded-full opacity-0"></div> {/* no change; transparent */}
+    </div>
+  )
+}
 
 export default function InterpretationPage() {
   const {
@@ -13,14 +31,14 @@ export default function InterpretationPage() {
     changingLines,
     musicPlan,
     setMusicPlan,
-    resetAll,                                          // ⭐ 新增
+    resetAll,                                         
   } = useIching();
 
-  const navigate = useNavigate();                      // ⭐ 新增
+  const navigate = useNavigate();                      
 
   const handleStartOver = () => {
     resetAll();
-    navigate("/");                                     // ⭐ 回首页
+    navigate("/");                                     
   };
 
   const [loading, setLoading] = useState(true);
@@ -52,8 +70,8 @@ export default function InterpretationPage() {
           }
         }
 
-        const [benGuaIdx, benGuaChinese] = hexagramLookup[benGua];
-        const [zhiGuaIdx, zhiGuaChinese] = hexagramLookup[zhiGua];
+        const benGuaIdx = hexagramLookup[benGua][0];
+        const zhiGuaIdx = hexagramLookup[zhiGua][0];
         const plan = await getIchingMusicPlan({
           question,
           benGuaIdx,
@@ -77,7 +95,7 @@ export default function InterpretationPage() {
           ambientRef.current.pause();
           ambientRef.current.currentTime = 0;
         }
-        setError("占卜生成出错，请返回重新输入问题或卦象。");
+        setError("The oracle did not speak this time. Please try again.");
         setLoading(false);
       }
     }
@@ -85,10 +103,28 @@ export default function InterpretationPage() {
     run();
   }, []);
 
+  function renderHexagram(lines) {
+    if (!lines) return null;
+
+    const arr = Array.from(lines).map(n => Number(n));
+
+    return (
+      <div className="flex flex-col items-center space-y-1">
+        {arr
+          .slice()
+          .map((line, row) => (
+            <div key={row} className="w-full flex justify-center">
+              {line === 1 ? lineStyles.yang : lineStyles.yin}
+            </div>
+          ))}
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-screen h-screen overflow-hidden text-black bg-gradient-to-b from-amber-50 via-white to-slate-100 yijing-text">
       
-      {/* ⭐ Start Over 按钮（左上角） */}
+      {/* Start Over button */}
       <button
         onClick={handleStartOver}
         className="absolute top-4 left-4 z-50 px-4 py-2 rounded-full border border-white/60 bg-black/40 text-white text-sm hover:bg-black/70 transition"
@@ -96,7 +132,7 @@ export default function InterpretationPage() {
         Start Over
       </button>
 
-      {/* 背景呼吸球 */}
+      {/* Background Oracle */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
       {/* 太极光晕（慢速旋转） */}
@@ -115,13 +151,16 @@ export default function InterpretationPage() {
         <div className="absolute right-0 bottom-10 w-72 h-72 bg-amber-100/40 blur-3xl rounded-full animate-pulse" />
       </div>
 
-      {/* 内容区 */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6 text-center">
-
-        {/* 等待文案 */}
-        {loading && !error && (
-          <div className="space-y-4 max-w-xl bg-white/50 backdrop-blur-md rounded-2xl px-6 py-5 shadow-md">
-            <p className="text-lg leading-relaxed text-black/80">
+      {/* Loading */}
+      {loading && !error && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center">
+          <div className="space-y-4 max-w-xl bg-white/50 backdrop-blur-md rounded-2xl px-6 py-5 shadow-md text-center">
+            <p className="text-m leading-relaxed text-black/60 italic">
+              The hexagrams are forming in silence.
+              <br />
+              Breathe with the oracle while it listens to your question.
+            </p>
+            <p className="text-m leading-relaxed text-black/80">
               卦象正在缓缓显形，请与呼吸同频片刻……
             </p>
             <p className="text-sm leading-relaxed text-black/70">
@@ -129,76 +168,111 @@ export default function InterpretationPage() {
               <br />
               你的念头、时间与爻象正在交织成一段声音的旅程。
             </p>
-            <p className="text-xs leading-relaxed text-black/60 italic">
-              The hexagrams are forming in silence.
-              <br />
-              Breathe with the oracle while it listens to your question.
-            </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 问题 + 卦象 */}
-        {!loading && !error && (
-          <div className="mb-4 text-sm text-black/70 max-w-2xl">
-            {question && (
-              <p className="mb-2">
-                <span className="font-semibold">问题：</span>
-                {question}
-              </p>
-            )}
-            <p>
-              <span className="font-semibold">本卦：</span>
-              {benGua ?? "?"}　/　
-              <span className="font-semibold">之卦：</span>
-              {zhiGua ?? "?"}
-              {changingLines?.length
-                ? `　（动爻：${changingLines.join(", ")}）`
-                : ""}
-            </p>
-          </div>
-        )}
+      {/* 内容区 */}
+      <div className={`absolute inset-0 flex z-20 p-6 items-center justify-center space-x-10 ${loading ? "opacity-0 pointer-events-none" : ""}`}>
 
-        {/* 解读结果 */}
-        {!loading && !error && musicPlan && (
-          <div className="backdrop-blur-md bg-white/70 p-6 rounded-2xl shadow-xl max-w-2xl text-left">
-            <h2 className="text-2xl mb-3 text-center">易经解读</h2>
+        {/* LEFT COLUMN — HEXAGRAMS */}
+        <div className="shrink-0 flex flex-col justify-center items-center space-y-2 text-center">
 
-            <h3 className="text-base font-semibold mb-1">中文解读</h3>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3">
-              {musicPlan.interpretation_zh ||
-                musicPlan.interpretation ||
-                "（暂无中文解读）"}
-            </p>
+          {/* Ben Gua */}
+          {!loading && !error && (
+            <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
+              <h3 className="text-xl font-semibold mb-2 text-black/80">BenGua (本卦)</h3>
 
-            <h3 className="text-base font-semibold mb-1">Interpretation (English)</h3>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap italic mb-4 text-black/75">
-              {musicPlan.interpretation_en || "No English interpretation found."}
-            </p>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="transform translate-x-3">{renderHexagram(benGua)}</div>
 
-            {/* Debug JSON */}
-            <div className="mt-2">
-              <button
-                onClick={() => setShowDebug((v) => !v)}
-                className="px-3 py-1 border border-gray-400 text-gray-700 rounded-full text-xs hover:bg-gray-100 transition"
-              >
-                {showDebug ? "隐藏调试 JSON" : "显示调试 JSON（Lyria Prompt 等）"}
-              </button>
+                <div className="flex flex-col justify-center space-y-1">
+                  <div className="text-black/80 font-medium text-xl">
+                    {hexagramLookup[benGua][1]}
+                  </div>
 
-              {showDebug && (
-                <pre className="mt-2 text-xs bg-gray-100/90 p-2 rounded max-h-48 overflow-auto text-left">
-                  {JSON.stringify(musicPlan, null, 2)}
-                </pre>
-              )}
+                  <div className="text-black/60 text-sm">
+                    ({hexagramLookup[benGua][2]})
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 错误 */}
-        {error && (
-          <div className="text-red-600 text-lg bg-white/70 px-4 py-3 rounded-xl">
-            {error}
-          </div>
-        )}
+          {/* Changing Lines */}
+          {!loading && !error && (
+            <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
+              <h3 className="text-xl font-semibold mb-2 text-black/80">Changing Lines (动爻)</h3>
+              <div className="text-m mb-2 text-black/80">{changingLines.length?`${changingLines.join(", ")} (Bottom to Top)`:"None"} </div>
+            </div>
+          )}
+
+          {/* Zhi Gua */}
+          {!loading && !error && (
+            <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-md w-72 flex flex-col items-center space-y-3">
+              <h3 className="text-xl font-semibold mb-2 text-black/80">ZhiGua (之卦)</h3>
+
+              <div className="flex flex-col items-center space-y-3">
+                <div className="transform translate-x-3">{renderHexagram(zhiGua)}</div>
+
+                <div className="flex flex-col justify-center space-y-1">
+                  <div className="text-black/80 font-medium text-xl">
+                    {hexagramLookup[zhiGua][1]}
+                  </div>
+
+                  <div className="text-black/60 text-sm">
+                    ({hexagramLookup[zhiGua][2]})
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN — INTERPRETATION / LOADING / ERROR */}
+        <div className="flex flex-col items-center justify-center text-center">
+
+          {/* Interpretation Panel */}
+          {!loading && !error && musicPlan && (
+            <div className="backdrop-blur-md bg-white/70 p-7 rounded-2xl shadow-xl max-w-2xl text-left space-y-5">
+
+              <h2 className="text-xl mb-3 text-center font-semibold">I-Ching Interpretation</h2>
+
+              <p className="text-m leading-relaxed whitespace-pre-wrap mb-4 text-black/75">
+                {musicPlan.interpretation_en || "No English interpretation found."}
+              </p>
+
+              <p className="text-m leading-relaxed whitespace-pre-wrap mb-3">
+                {musicPlan.interpretation_zh ||
+                  musicPlan.interpretation ||
+                  "（暂无中文解读）"}
+              </p>
+
+              {/* Debug JSON */}
+              <div className="mt-2 py-3">
+                <button
+                  onClick={() => setShowDebug((v) => !v)}
+                  className="px-3 py-2 border border-gray-400 text-gray-700 rounded-full text-xs hover:bg-gray-100 transition"
+                >
+                  Lyria Prompt JSON
+                </button>
+
+                {showDebug && (
+                  <pre className="mt-2 text-xs bg-gray-100/90 p-2 rounded max-h-48 overflow-auto text-left">
+                    {JSON.stringify(musicPlan, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="text-red-600 text-lg bg-white/70 px-4 py-3 rounded-xl">
+              {error}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
