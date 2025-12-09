@@ -1,26 +1,39 @@
 export default function TooltipButton({ text }) {
   return (
     <div className="absolute top-4 right-4 z-50 group">
-      {/* The button */}
+      {/* Small floating button */}
       <div
         className="w-8 h-8 flex items-center justify-center
         backdrop-blur-md shadow-md 
-        z-50 px-4 py-2 rounded-full border border-white/60 bg-black/40 text-white text-xl font-semibold font-serif
+        rounded-full border border-white/60 bg-black/40 text-white text-xl font-semibold font-serif
         hover:bg-black/70 transition cursor-pointer"
       >
         ?
       </div>
 
-      {/* The tooltip */}
+      {/* Fullscreen overlay */}
       <div
-        className="absolute right-0 mt-2 w-[500px]
-        opacity-0 group-hover:opacity-100
-        pointer-events-none 
-        transition-opacity duration-300
-        bg-white/70 backdrop-blur-md shadow-2xl drop-shadow-2xl rounded-xl 
-        p-4 text-sm leading-relaxed text-black/80 font-serif"
+        className="
+          fixed inset-0
+          bg-black/40 backdrop-blur-sm
+          opacity-0 group-hover:opacity-100 
+          pointer-events-none group-hover:pointer-events-auto
+          transition-opacity duration-300
+          flex items-center justify-center
+          z-40
+        "
       >
-        {text}
+        {/* Tooltip content window */}
+        <div
+          className="
+            w-[95vw] h-[90vh]
+            bg-white/90 backdrop-blur-md
+            rounded-2xl shadow-2xl border border-white/40
+            overflow-auto p-6
+          "
+        >
+          {text}
+        </div>
       </div>
     </div>
   );

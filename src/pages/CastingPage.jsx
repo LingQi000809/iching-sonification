@@ -3,8 +3,30 @@ import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching } from "../context/IchingContext";
 import TooltipButton from "../components/TooltipButton";
+import castingLegend from "../assets/casting.svg";
 
-const tooltipText = "Text Placeholder for Casting Stage";
+
+
+const tooltipText = (
+  <div className="w-full h-full flex flex-col items-center p-10 space-y-6">
+    
+    {/* Header */}
+    <h2 className="text-2xl font-semibold text-black/80 font-serif tracking-wide">
+      How does Wen Wang Fa / 文王法 work?
+    </h2>
+
+    {/* SVG Image */}
+    <img
+      src={castingLegend}
+      alt="Line Legend"
+      className="w-full h-auto max-w-none"
+    />
+    
+  </div>
+);
+
+
+
 
 const lineStyles = {
   yang: (
