@@ -213,8 +213,8 @@ export default function CastingSoundEngine() {
     // ------------------------------
     // Fade-in volume
     // ------------------------------
-    inst.volume.value = -18;
-    inst.volume.linearRampToValueAtTime(-10, Tone.now() + 1);
+    inst.volume.value = -5;
+    inst.volume.linearRampToValueAtTime(0, Tone.now() + 1);
 
     // ------------------------------
     // Loop aligned to upcoming bar
