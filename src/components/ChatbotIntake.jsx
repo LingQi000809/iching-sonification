@@ -141,7 +141,7 @@ export default function ChatbotIntake({ onFinished }) {
             <div className="text-xs tracking-[0.2em] text-amber-700/80 uppercase">
               I-Ching · 易經
             </div>
-            <h2 className="mt-2 text-xl font-semibold text-amber-900">
+            <h2 className="mt-2 text-l font-semibold text-amber-900">
               Introduction to the Oracle / 占辞引
             </h2>
           </div>

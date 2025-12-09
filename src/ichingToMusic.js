@@ -72,12 +72,12 @@ export async function getIchingMusicPlan(params) {
             parts: [{ text: prompt }],
         }, ],
         generationConfig: {
-            // 官方推荐字段名是 responseMimeType（驼峰）
+
             responseMimeType: "application/json",
         },
     });
 
-    // 新版 SDK：text 是一个属性，不是函数
+
     const rawText = (response && response.text) || "";
     console.log("Gemini raw response.text:", rawText);
 
@@ -85,7 +85,7 @@ export async function getIchingMusicPlan(params) {
         throw new Error("Empty response from Gemini");
     }
 
-    // 有些时候模型会返回 ```json ... ```，这里把外壳剥掉
+
     let cleaned = rawText.trim();
 
     if (cleaned.startsWith("```")) {
@@ -102,7 +102,7 @@ export async function getIchingMusicPlan(params) {
         return parsed;
     } catch (err) {
         console.error("Failed to parse Gemini JSON:", err);
-        // 为了 debug，顺便把原文本打印出来
+
         console.error("Raw text was:", rawText);
         throw err;
     }
