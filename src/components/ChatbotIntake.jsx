@@ -37,10 +37,15 @@ export default function ChatbotIntake({ onFinished }) {
     switch (step) {
       case 0:
         return (
-          <>
+           <>
             Welcome to
             <br />
-            the I-Ching sonification oracle.
+            <span style={{ fontStyle: "italic", fontWeight: 700, lineHeight: "2" }}>
+              Music of Changing Lines
+            </span>
+            ,
+            <br />
+            a sonified I-Ching divination process.
           </>
         );
       case 2:
@@ -195,7 +200,7 @@ export default function ChatbotIntake({ onFinished }) {
       {step !== 1 && (
         <div
           className={`
-            font-serif absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-10
+            font-serif absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
             text-2xl text-black text-center transition-opacity duration-200
             ${fade ? "opacity-100" : "opacity-0"}
           `}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BreathingOracle from "../components/BreathingOracle";
 import { useIching, hexagramLookup } from "../context/IchingContext";
@@ -96,9 +96,12 @@ export default function InterpretationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showDebug, setShowDebug] = useState(false);
+  const hasRunRef = useRef(false);
 
   useEffect(() => {
+    if (hasRunRef.current) return;
     let cancelled = false;
+    hasRunRef.current = true;
 
     async function run() {
       try {

@@ -174,7 +174,7 @@ export default function CastingSoundEngine() {
     else phraseLength = 4 + Math.floor(Math.random() * 3); // neutral → medium (4–6)
 
     const truncDegs = degs.slice(0, phraseLength);
-    const melody = truncDegs.map((d) => note(d, 4 + (row % 2)));
+    const melody = truncDegs.map((d)  => note(d, 4 + (row % 2)));
     console.log(`Generated pitches for row ${row}: ${melody}`);
 
     // ------------------------------
