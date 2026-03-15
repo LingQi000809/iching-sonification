@@ -67,6 +67,24 @@ const lineStyles = {
   ),
 };
 
+const saveToGoogleSheets = async (payload) => {
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeOi5pYqlX07mffaf4yiUSukNuu9W2BrmYjayxjQHU6Zg_A-J4haYx2P5KKad7epm3/exec";
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors", // Required for Google Apps Script redirects
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    console.log("Data sent to Google Sheets");
+  } catch (error) {
+    console.error("Error saving to Sheets:", error);
+  }
+};
+
 export default function InterpretationPage() {
   const {
     question,
@@ -112,6 +130,14 @@ export default function InterpretationPage() {
         const zhiGuaIdx = hexagramLookup[zhiGua][0];
 
         const plan = await getIchingMusicPlan({
+          question,
+          benGuaIdx,
+          zhiGuaIdx,
+          changingLines,
+        });
+
+        await saveToGoogleSheets({
+          plan,
           question,
           benGuaIdx,
           zhiGuaIdx,
