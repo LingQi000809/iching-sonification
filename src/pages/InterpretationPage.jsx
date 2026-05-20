@@ -235,19 +235,14 @@ export default function InterpretationPage() {
       {/* Loading */}
       {loading && !error && (
         <div className="absolute inset-0 z-40 flex items-center justify-center">
-          <div className="space-y-4 max-w-xl bg-white/50 backdrop-blur-md rounded-2xl px-6 py-5 shadow-md text-center">
-            <p className="text-m leading-relaxed text-black/60 italic">
+          <div className="space-y-3 max-w-xl bg-white/50 backdrop-blur-md rounded-2xl px-6 py-5 shadow-md text-center">
+            <p className="text-lg leading-relaxed text-black/80 italic font-serif">
               The hexagrams are forming in silence.
               <br />
               Breathe with the oracle while it listens to your question.
             </p>
-            <p className="text-m leading-relaxed text-black/80">
+            <p className="text-sm leading-relaxed text-black/50">
               卦象正在缓缓显形，请与呼吸同频片刻……
-            </p>
-            <p className="text-sm leading-relaxed text-black/70">
-              深吸气，慢慢呼气。
-              <br />
-              你的念头、时间与爻象正在交织成一段声音的旅程。
             </p>
           </div>
         </div>

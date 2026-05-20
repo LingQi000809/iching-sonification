@@ -207,6 +207,14 @@ export default function CastingPage() {
       {/* Background oracle visual */}
       <BreathingOracle size={400} opacity={0.5} maskOpacity={0.5} />
 
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 w-full max-w-lg px-30 pointer-events-none">
+        <div className="border-t border-b border-black/60 py-3 text-center">
+          <span className="font-bold text-lg tracking-widest text-black-900/70" style={{ fontVariant: "small-caps" }}>
+            Toss 3 coins, 6 times, to reveal your hexagram.
+          </span>
+        </div>
+      </div>
+
       {/* 6 rows rendered bottom → top */}
       <div className="flex flex-col-reverse space-y-4 space-y-reverse items-center mb-10 relative z-10">
         {rows.map((row) => (
@@ -276,7 +284,6 @@ export default function CastingPage() {
 
       {/* Tooltip Button */}
       <TooltipButton text={tooltipText}/>
-
 
       {/* Interpret Button */}
       <button
