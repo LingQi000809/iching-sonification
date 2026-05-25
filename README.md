@@ -8,7 +8,7 @@ Users perform the Wen Wang Fa coin-casting method to generate hexagrams and chan
 
 ## Resources
  
-- 📄 Paper: TBA (under review by arxiv)
+- 📄 Paper: [arxiv](https://arxiv.org/abs/2605.20386)
 - 🎞️ [Walkthrough Video](https://vimeo.com/1150693113?share=copy&fl=sv&fe=ci)
 - 🖼️ [Slides](https://prezi.com/view/FORFhQIicL4tST9hzqCV/?referral_token=fL7ti1lnB3FN); presented at International Computer Music Conference (ICMC) 2026, Hamburg
 
